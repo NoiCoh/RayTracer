@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
-import javax.xml.crypto.dsig.CanonicalizationMethod;
 
 /**
  * Main class for ray tracing exercise.
@@ -22,6 +21,7 @@ public class RayTracer {
 	public int imageWidth;
 	public int imageHeight;
 	List<Primitive> primitives = new ArrayList<Primitive>();
+	List<Primitive> UpdatedPrimitives = new ArrayList<Primitive>();
 	List<Material> materials = new ArrayList<Material>();
 	List<Light> lights = new ArrayList<Light>();
 	Cam cam = new Cam();
@@ -236,7 +236,6 @@ public class RayTracer {
 
 		// Create a byte array to hold the pixel data:
 		byte[] rgbData = new byte[this.imageWidth * this.imageHeight * 3];
-		double epsilon = 0.0000001;
 		int ssl = set.SuperSamplingLevel;
 		int ssHeight = imageHeight * ssl;
 		int ssWidth = imageWidth * ssl;
@@ -270,12 +269,14 @@ public class RayTracer {
 						ssP = (P.add(Vy.multByScalar(heightOffset))).add(Vx.multByScalar(widthOffset));
 						Ray ray = new Ray(cam.camPosition, ssP.sub(cam.camPosition));
 						ray.directionVector.normalize();
-						Intersection hit = Intersection.FindIntersction(ray, scene);
+						Intersection hit = Intersection.FindIntersction(ray, primitives);
 						if (hit.min_t == Double.MAX_VALUE) {
 							finalcolor.r += set.backgroundColor[0];
 							finalcolor.g += set.backgroundColor[1];
 							finalcolor.b += set.backgroundColor[2];
 						} else {
+							UpdatedPrimitives = new ArrayList<Primitive>(primitives);
+							UpdatedPrimitives.remove(hit.min_primitive);
 							Color col = color(hit, ray, set.MaxNumberOfRecursion);
 							finalcolor.r += col.r;
 							finalcolor.g += col.g;
@@ -359,7 +360,6 @@ public class RayTracer {
 		Color transfCol = new Color();
 		if (mat.transparency > 0) {
 			transfCol = culcTransColors(mat, N, ray, intersectionPoint, recDepth);
-
 		}
 
 		Color reflectionColor = new Color();
@@ -388,7 +388,7 @@ public class RayTracer {
 		vector R = ray.directionVector.add(N.multByScalar(-2 * ray.directionVector.dotProduct(N)));
 		R.normalize();
 		Ray refRay = new Ray(IntersectionPoint.add(R.multByScalar(0.001)), R);
-		Intersection hit = Intersection.FindIntersction(refRay, scene);
+		Intersection hit = Intersection.FindIntersction(refRay, primitives);
 
 		if (hit.min_t == Double.MAX_VALUE) {
 
@@ -415,9 +415,9 @@ public class RayTracer {
 
 	public Color culcTransColors(Material mat, vector N, Ray ray, vector intersectionPoint, int recDepth) {
 		Color col = new Color();
-
 		Ray transRay = new Ray(intersectionPoint.add(ray.directionVector.multByScalar(0.001)), ray.directionVector);
-		Intersection transHit = Intersection.FindIntersction(transRay, scene);
+		Intersection transHit = Intersection.FindIntersction(transRay, UpdatedPrimitives);
+		UpdatedPrimitives.remove(transHit.min_primitive);
 		if (transHit.min_t != Double.MAX_VALUE) {
 			Color tempCol = color(transHit, transRay, recDepth - 1);
 			col.r = tempCol.r;

@@ -1,5 +1,7 @@
 package RayTracing;
 
+import java.util.List;
+
 public class Intersection {
 	double min_t;
 	Primitive min_primitive;
@@ -9,11 +11,11 @@ public class Intersection {
 		this.min_t = min_t;
 	}
 
-	public static Intersection FindIntersction(Ray ray, Scene scene) {
+	public static Intersection FindIntersction(Ray ray, List<Primitive> Primitives) {
 		double t;
 		double min_t = Double.MAX_VALUE;
 		Primitive min_primitive = null;
-		for (Primitive primitive : scene.Primitives) {
+		for (Primitive primitive : Primitives) {
 			t = primitive.intersecte(ray);
 			if (t < min_t && t > 0) {
 				min_primitive = primitive;
