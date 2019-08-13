@@ -67,7 +67,6 @@ public class RayTracer {
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
-
 	}
 
 	/**
